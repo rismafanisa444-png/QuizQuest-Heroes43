@@ -1,0 +1,152 @@
+const questionsBank = [
+  [
+    {
+      question: "What is 2 + 3?",
+      choices: ["3", "4", "5", "6"],
+      answer: "5"
+    },
+    {
+      question: "Color of sky during day?",
+      choices: ["Blue", "Green", "Red", "Yellow"],
+      answer: "Blue"
+    }
+  ],
+  [
+    {
+      question: "Capital city of France?",
+      choices: ["Paris", "Berlin", "London", "Rome"],
+      answer: "Paris"
+    },
+    {
+      question: "Sun rises from the?",
+      choices: ["West", "East", "North", "South"],
+      answer: "East"
+    }
+  ],
+  [
+    {
+      question: "Who wrote 'Romeo and Juliet'?",
+      choices: ["Shakespeare", "Hemingway", "Tolkien", "Rowling"],
+      answer: "Shakespeare"
+    },
+    {
+      question: "Water freezes at what degrees Celsius?",
+      choices: ["0", "100", "50", "10"],
+      answer: "0"
+    }
+  ]
+];
+
+const characters = [
+  {name: "Spark the Brave", cost: 5, img: 'https://i.ibb.co/2NyXfKX/hero1.png', unlocked: false},
+  {name: "Luna the Wise", cost: 10, img: 'https://i.ibb.co/f4Y5ZTW/hero2.png', unlocked: false},
+  {name: "Max the Swift", cost: 15, img: 'https://i.ibb.co/yYkqCJy/hero3.png', unlocked: false}
+];
+
+let level = 0;
+let questionIndex = 0;
+let coins = 0;
+let currentQuestions = [];
+let selectedAnswer = null;
+
+const questionText = document.getElementById("question-text");
+const choicesContainer = document.getElementById("choices-container");
+const submitBtn = document.getElementById("submit-btn");
+const coinsDisplay = document.getElementById("coins");
+const resultDisplay = document.getElementById("result");
+const charactersContainer = document.getElementById("characters-container");
+
+function loadCharacters() {
+  charactersContainer.innerHTML = "";
+  characters.forEach((char, idx) => {
+    const card = document.createElement("div");
+    card.className = "character-card";
+    if (char.unlocked) card.classList.add("unlocked");
+    card.innerHTML = `
+      <img src="${char.img}" alt="${char.name}" />
+      <p>${char.name}</p>
+      <p>Cost: ${char.cost} coins</p>
+      <button class="unlock-button" ${char.unlocked || coins < char.cost ? "disabled" : ""} data-index="${idx}">
+        ${char.unlocked ? "Unlocked" : "Unlock"}
+      </button>
+    `;
+    charactersContainer.appendChild(card);
+  });
+  document.querySelectorAll('.unlock-button').forEach(btn => {
+    btn.onclick = () => {
+      const idx = btn.getAttribute('data-index');
+      if (coins >= characters[idx].cost && !characters[idx].unlocked) {
+        coins -= characters[idx].cost;
+        characters[idx].unlocked = true;
+        updateCoins();
+        loadCharacters();
+      }
+    };
+  });
+}
+
+function updateCoins() {
+  coinsDisplay.textContent = `Coins: ${coins}`;
+}
+
+function startLevel() {
+  if (level >= questionsBank.length) {
+    questionText.textContent = "Congratulations! You completed all levels!";
+    choicesContainer.innerHTML = "";
+    submitBtn.style.display = "none";
+    return;
+  }
+  currentQuestions = questionsBank[level];
+  questionIndex = 0;
+  loadQuestion();
+  submitBtn.disabled = false;
+  resultDisplay.textContent = "";
+}
+
+function loadQuestion() {
+  selectedAnswer = null;
+  const currentQuestion = currentQuestions[questionIndex];
+  questionText.textContent = `Level ${level + 1} - Q${questionIndex + 1}: ${currentQuestion.question}`;
+  choicesContainer.innerHTML = "";
+  currentQuestion.choices.forEach((choice, i) => {
+    const label = document.createElement("label");
+    label.innerHTML = `
+      <input type="radio" name="choice" value="${choice}" /> ${choice}
+    `;
+    choicesContainer.appendChild(label);
+  });
+}
+
+submitBtn.onclick = () => {
+  const selected = document.querySelector('input[name="choice"]:checked');
+  if (!selected) {
+    alert("Please select an answer!");
+    return;
+  }
+  selectedAnswer = selected.value;
+  const currentQuestion = currentQuestions[questionIndex];
+  if (selectedAnswer === currentQuestion.answer) {
+    coins += 2;
+    updateCoins();
+    resultDisplay.textContent = "Correct! +2 coins";
+  } else {
+    resultDisplay.textContent = `Wrong! Correct answer: ${currentQuestion.answer}`;
+  }
+  submitBtn.disabled = true;
+
+  setTimeout(() => {
+    questionIndex++;
+    if (questionIndex >= currentQuestions.length) {
+      level++;
+      startLevel();
+    } else {
+      loadQuestion();
+      submitBtn.disabled = false;
+      resultDisplay.textContent = "";
+    }
+  }, 1500);
+};
+
+updateCoins();
+loadCharacters();
+startLevel();
